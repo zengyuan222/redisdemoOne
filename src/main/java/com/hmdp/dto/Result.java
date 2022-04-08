@@ -24,6 +24,10 @@ public class Result {
     public static Result ok(List<?> data, Long total){
         return new Result(true, null, data, total);
     }
+    // 自己加
+    public static Result ok(List<?> data){
+        return new Result(true, null, data, null);
+    }
     public static Result fail(String errorMsg){
         return new Result(false, errorMsg, null, null);
     }

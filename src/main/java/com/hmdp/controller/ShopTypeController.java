@@ -27,8 +27,14 @@ public class ShopTypeController {
 
     @GetMapping("list")
     public Result queryTypeList() {
+        /**
+         * 原来的
+
         List<ShopType> typeList = typeService
                 .query().orderByAsc("sort").list();
         return Result.ok(typeList);
+         */
+
+        return Result.ok(typeService.queryAllList());
     }
 }
