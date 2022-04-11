@@ -1,6 +1,8 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.ShopType;
 import com.hmdp.mapper.ShopTypeMapper;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,8 +33,11 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+
     @Override
     public Object queryAllList() {
+        List<ShopType> renturnList = new ArrayList<>();
+        List<String> saveRedisList = new ArrayList<>();
         String key = CACHE_SHOPTYPE_KEY ;
         // 1.从redis查询商铺缓存
             //String shopJson = stringRedisTemplate.opsForValue().get(key);
@@ -41,17 +47,26 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         if(shopTypeJsonList.size() > 0){
             // 3.存在,直接返回
             //Shop shop = JSONUtil.toBean(shopJson, Shop.class);
-            return Result.ok(shopTypeJsonList);
+            for(String shopType: shopTypeJsonList){
+                renturnList.add(JSONUtil.toBean(shopType, ShopType.class));
+            }
+            return renturnList;
         }
         // 4.不存在，根据id查询数据库
-        //List<ShopType> list = list();
-        List<String> strs = (List<String>)(List)list();
+        List<ShopType> strs = list();
+        //List<String> strs = (List<String>)(List)list();
         // 5.不存在，返回错误
         if(strs == null){
             return Result.fail("商店类型不存在");
         }
+        // 遍历转json
+        for(ShopType str : strs){
+            //String jsonString = JSONObject.toJSONString(str);
+            String jsonString = JSONUtil.toJsonStr(str);
+            saveRedisList.add(jsonString);
+        }
         // 6.存在，写入redis
-        stringRedisTemplate.opsForList().rightPushAll(key, strs);
+        stringRedisTemplate.opsForList().rightPushAll(key, saveRedisList);
         // 7.返回
 
 
@@ -59,7 +74,7 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
 //
 //        List<String> strs1 = (List<String>)(List)list();
 
-        return Result.ok(strs);
+        return strs;
         //return null;
     }
 }
